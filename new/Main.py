@@ -16,14 +16,15 @@ class Main():
       self.calibration_points.append(point)
     elif not self.in_calibration and point_tuple:
       point,fingers = point_tuple
+      print point
       x,y,z_transform = self.translator.leaptransform(point)
       z = point[2] - z_transform
+      print z_transform
       x,y = self.calibrator.leaptoscreen(point[0],point[1])
       if z < self.z_limit :
         self.down = True
       elif z >  self.z_limit:
         self.down = False
-
       print 'DOWN = ', self.down
       self.interact.update(x,y,self.down,fingers)
 
