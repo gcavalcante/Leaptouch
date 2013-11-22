@@ -16,11 +16,12 @@ class Main():
       self.calibration_points.append(point)
     elif not self.in_calibration and point_tuple:
       point,fingers = point_tuple
-      x,y,z_transform = self.calibrator.leaptransform(point)
+      x,y,z_transform = self.translator.leaptransform(point)
       z = point[2] - z_transform
-      if z < self.z_limit + 10:
+      x,y = self.calibrator.leaptoscreen(point[0],point[1])
+      if z < self.z_limit :
         self.down = True
-      elif z >  self.z_limit + 10:
+      elif z >  self.z_limit:
         self.down = False
 
       print 'DOWN = ', self.down
@@ -47,7 +48,8 @@ class Main():
     self.in_calibration = True
     self.listener = Listener.Listener(self.on_frame)
     self.calibration_points = []
-    self.calibrator = Calibration.Translator()
+    self.translator = Calibration.Translator()
+    self.calibrator = Calibration.Calibration()
     #Decide what Interact to Call
     os_name = platform.system().lower()
     if os_name == OS_NAME_OSX:
@@ -64,7 +66,8 @@ class Main():
 
   def end_calibration(self):
     self.in_calibration = False
-    self.calibrator.calibratepoints(self.calibration_points)
+    self.translator.calibratepoints(self.calibration_points)
+    self.calibrator.set_calibration(self.calibration_points)
     self.z_limit = self.get_extreme_z(self.calibration_points)
     #Call the Calibrate funtion in Translation Module (self.calibration_points)
 
