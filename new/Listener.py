@@ -2,7 +2,7 @@ from lib import Leap
 import sys
 
 #INIT
-N_FRAMES = 10
+N_FRAMES = 5
 
 
 class Listener(Leap.Listener):
@@ -37,7 +37,7 @@ class Listener(Leap.Listener):
   def on_frame(self, controller):
     frames = [controller.frame(i) for i in xrange(N_FRAMES)]
     frames.reverse()
-
+    fingers = 0
     avg = [0, 0, 0]
     frame_count = 0
 
@@ -51,13 +51,18 @@ class Listener(Leap.Listener):
         avg[2] += p[2]
 
         frame_count += 1
-    if frame_count == 0:
+      if not frame.hands.is_empty:
+        fingers = len(frame.hands[0].fingers)
+
+    if avg[2] > -220:
+      self.callback(None)
+    elif frame_count == 0:
       self.callback(None)
     else:
       avg[0] /= frame_count
       avg[1] /= frame_count
       avg[2] /= frame_count
-      self.callback(avg)
+      self.callback((avg,fingers))
 
 
 #Only to debug reasons

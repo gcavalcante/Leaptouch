@@ -1,6 +1,9 @@
 import AppKit#, Leap, subprocess
-from Quartz.CoreGraphics import (CGEventPost, CGEventCreateMouseEvent, kCGEventLeftMouseDragged, kCGEventMouseMoved, 
-  kCGEventLeftMouseDown, kCGEventLeftMouseUp, kCGHIDEventTap)
+from Quartz.CoreGraphics import (CGEventCreateMouseEvent,CGEventPost,CGDisplayBounds,
+    CGEventCreateScrollWheelEvent,CGEventSourceCreate,kCGScrollEventUnitPixel,
+    kCGScrollEventUnitLine,kCGEventMouseMoved,kCGEventLeftMouseDragged,
+    kCGEventLeftMouseDown,kCGEventLeftMouseUp,kCGMouseButtonLeft,kCGEventRightMouseDown,
+    kCGEventRightMouseDown,kCGEventRightMouseUp,kCGMouseButtonRight,kCGHIDEventTap)
 #from Leap import SwipeGesture 
 
 # OSX interaction class
@@ -13,9 +16,13 @@ class Interact():
     self.mouse_y = 0
     self.last_mouse_state = False
 	
-  def update(self, finger_x, finger_y, pressed):
-    self.set_left_button_pressed(pressed)
+  def update(self, finger_x, finger_y, pressed, fingers):
+    if fingers == 1:
+      self.set_left_button_pressed(pressed)
+    elif fingers == 2 and self.last[3] == 2:
+      RelativeMouseScroll(self.last[0]-finger_x,self.last[1]-finger_y)
     self.move_mouse(finger_x, finger_y)
+    self.last = (finger_x,finger_y,pressed,fingers)
 
 
   def move_mouse(self, x, y):
@@ -65,3 +72,13 @@ class Interact():
       osa = subprocess.Popen('osascript', shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
       (out, err) = osa.communicate(gesture_script)
       gesture_script = None
+
+
+def RelativeMouseScroll(x_movement, y_movement):  #Movements should be no larger than +- 10
+    scrollWheelEvent = CGEventCreateScrollWheelEvent(
+            None,  #No source
+            kCGScrollEventUnitPixel,  #We are using pixel units
+            2,  #Number of wheels(dimensions)
+            y_movement,
+            x_movement)
+    CGEventPost(kCGHIDEventTap, scrollWheelEvent)
