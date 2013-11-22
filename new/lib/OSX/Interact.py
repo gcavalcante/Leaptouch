@@ -1,13 +1,17 @@
-import AppKit#, Leap, subprocess
+import AppKit, subprocess, os
 from Quartz.CoreGraphics import (CGEventCreateMouseEvent,CGEventPost,CGDisplayBounds,
     CGEventCreateScrollWheelEvent,CGEventSourceCreate,kCGScrollEventUnitPixel,
     kCGScrollEventUnitLine,kCGEventMouseMoved,kCGEventLeftMouseDragged,
     kCGEventLeftMouseDown,kCGEventLeftMouseUp,kCGMouseButtonLeft,kCGEventRightMouseDown,
     kCGEventRightMouseDown,kCGEventRightMouseUp,kCGMouseButtonRight,kCGHIDEventTap)
-#from Leap import SwipeGesture 
 
 # OSX interaction class
 class Interact():
+
+  GEST_MISSION_CONTROL = 'MCGest'
+  GEST_SWIPE_LEFT = 'SLGest'
+  GEST_SWIPE_RIGHT = 'SRGest'
+  GEST_APP_VIEW = 'AVGest'
 
   def __init__(self):
     self.screen_width, self.screen_height = [(screen.frame().size.width, screen.frame().size.height) for screen in AppKit.NSScreen.screens()][-1]
@@ -17,10 +21,22 @@ class Interact():
     self.last_mouse_state = False
 	
   def update(self, finger_x, finger_y, pressed, fingers):
+    if not hasattr(self, 'last'):
+      self.last = (finger_x,finger_y,pressed,fingers)
     if fingers == 1:
       self.set_left_button_pressed(pressed)
     elif fingers == 2 and self.last[3] == 2:
-      RelativeMouseScroll(self.last[0]-finger_x,self.last[1]-finger_y)
+      Interact.execute_event(CGEventCreateScrollWheelEvent(None, kCGScrollEventUnitPixel, 2, self.last[1]-finger_y, self.last[0]-finger_x))
+    elif fingers >= 3 and self.last[3] >= 3:
+      if self.last[1] - finger_y > 60:
+        Interact.gestures(Interact.GEST_MISSION_CONTROL)
+      elif finger_y - self.last[1] > 60:
+        Interact.gestures(Interact.GEST_MISSION_CONTROL)
+      elif self.last[0] - finger_x > 60:
+        Interact.gestures(Interact.GEST_SWIPE_RIGHT)
+      elif finger_x - self.last[0] > 60:
+        Interact.gestures(Interact.GEST_SWIPE_LEFT)
+
     self.move_mouse(finger_x, finger_y)
     self.last = (finger_x,finger_y,pressed,fingers)
 
@@ -63,22 +79,16 @@ class Interact():
   def execute_event(event):
     CGEventPost(kCGHIDEventTap, event)
 
-  def interact_power(fingers, gestures):
-    for gesture in gestures:
-      if gesture.type == Leap.Gesture.TYPE_SWIPE:
-        swipe = SwipeGesture(gesture)
-      # Snippet from https://github.com/dennisjanssen/PyLeapMouse/blob/f3da2214cd9698cbeffed32d3393f8a9a95d6c33/LeapFunctions.py#L92
-      PIPE = subprocess.PIPE
-      osa = subprocess.Popen('osascript', shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-      (out, err) = osa.communicate(gesture_script)
-      gesture_script = None
-
-
-def RelativeMouseScroll(x_movement, y_movement):  #Movements should be no larger than +- 10
-    scrollWheelEvent = CGEventCreateScrollWheelEvent(
-            None,  #No source
-            kCGScrollEventUnitPixel,  #We are using pixel units
-            2,  #Number of wheels(dimensions)
-            y_movement,
-            x_movement)
-    CGEventPost(kCGHIDEventTap, scrollWheelEvent)
+  # OSX Gestures
+  @staticmethod
+  def gestures(gesture_type):
+    if gesture_type == Interact.GEST_MISSION_CONTROL:
+      gesture_script = 'tell application "System Events" to key code 126 using control down'
+    elif gesture_type == Interact.GEST_SWIPE_RIGHT:
+      gesture_script = 'tell application "System Events" to key code 124 using control down'
+    elif gesture_type == Interact.GEST_SWIPE_LEFT:
+      gesture_script = 'tell application "System Events" to key code 123 using control down'
+    elif gesture_type == Interact.GEST_APP_VIEW:
+      gesture_script = 'tell application "System Events" to key code 125 using control down'
+    # Snippet from https://github.com/dennisjanssen/PyLeapMouse/blob/f3da2214cd9698cbeffed32d3393f8a9a95d6c33/LeapFunctions.py#L92
+    os.system("osascript -e '" + gesture_script + "'")
