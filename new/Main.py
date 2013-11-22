@@ -8,7 +8,63 @@ Z_LIMIT_CUT = 20
 OS_NAME_OSX = 'darwin'
 OS_NAME_WIN = 'fuck'
 
-class Main():
+import objc, re, os
+from Foundation import *
+from AppKit import *
+from PyObjCTools import NibClassBuilder, AppHelper
+
+# Icon
+MENU_ICON = 'resources/iconleaptouch.png'
+
+#start_time = NSDate.date()
+
+class Main(NSObject):
+  statusbar = None
+
+  def applicationDidFinishLaunching_(self, notification):
+    statusbar = NSStatusBar.systemStatusBar()
+    # Create the statusbar item
+    self.statusitem = statusbar.statusItemWithLength_(NSVariableStatusItemLength)
+    # Set initial image
+    self.statusitem.setImage_(NSImage.alloc().initByReferencingFile_(MENU_ICON))
+    # Let it highlight upon clicking
+    self.statusitem.setHighlightMode_(1)
+    # Set a tooltip
+    self.statusitem.setToolTip_('Leaptouch')
+
+    # Build a very simple menu
+    self.menu = NSMenu.alloc().init()
+    # Sync event is bound to sync_ method
+    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Recalibrate', 'calibrate:', '')
+    self.menu.addItem_(menuitem)
+    # Default event
+    menuitem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_('Quit', 'terminate:', '')
+    self.menu.addItem_(menuitem)
+    # Bind it to the status item
+    self.statusitem.setMenu_(self.menu)
+
+    self.in_calibration = True
+    self.listener = Listener.Listener(self.on_frame)
+    self.calibration_points = []
+    self.translator = Calibration.Translator()
+    self.calibrator = Calibration.Calibration()
+    #Decide what Interact to Call
+    os_name = platform.system().lower()
+    if os_name == OS_NAME_OSX:
+      from lib.OSX import Interact
+      self.interact = Interact.Interact()
+    elif os_name == OS_NAME_WIN:
+      pass
+      from lib.WIN import interact
+      self.interact = Interact.Interact()
+    #Mouse Init
+    self.down = False
+
+    # Get the timer going
+    #self.timer = NSTimer.alloc().initWithFireDate_interval_target_selector_userInfo_repeats_(start_time, 5.0, self, 'tick:', None, True)
+    #NSRunLoop.currentRunLoop().addTimer_forMode_(self.timer, NSDefaultRunLoopMode)
+    #self.timer.fire()
+
   def on_frame(self,point_tuple):
     if self.in_calibration and point_tuple:
       point,fingers = point_tuple
@@ -28,40 +84,11 @@ class Main():
       print 'DOWN = ', self.down
       self.interact.update(x,y,self.down,fingers)
 
-
-      #Call the translator and interact
-
-#      if z < self.z_limit + Z_LIMIT_CUT : 
-#        self.interact.mousemove(x,y)
-#      if z < self.z_limit + Z_LIMIT_CUT and not self.down:
-#        self.interact.mousedown(x,y)
-#        self.down = True
-#      if z < self.z_limit + Z_LIMIT_CUT and self.down:
-#        self.interact.mousedragEvent(x,y)
-#      if z < self.z_limit + Z_LIMIT_CUT and self.down:
-#        self.interact.mouseup(x,y)
-#        self.down = False
-
-        
-        
-
-  def __init__(self):
+  def calibrate_(self, notification):
     self.in_calibration = True
-    self.listener = Listener.Listener(self.on_frame)
-    self.calibration_points = []
-    self.translator = Calibration.Translator()
-    self.calibrator = Calibration.Calibration()
-    #Decide what Interact to Call
-    os_name = platform.system().lower()
-    if os_name == OS_NAME_OSX:
-      from lib.OSX import Interact
-      self.interact = Interact.Interact()
-    elif os_name == OS_NAME_WIN:
-      pass
-      from lib.WIN import interact
-      self.interact = Interact.Interact()
-    #Mouse Init
-    self.down = False
+    while self.in_calibration == True:
+      print 'calib'
+
   def __del__(self):
     del self.listener
 
@@ -90,9 +117,8 @@ class Main():
     return smallers[2]
 
 
-
 if __name__ == "__main__":
-  main = Main()
-  foo = raw_input()
-  main.end_calibration()
-  foo = raw_input()
+  app = NSApplication.sharedApplication()
+  delegate = Main.alloc().init()
+  app.setDelegate_(delegate)
+  AppHelper.runEventLoop()
