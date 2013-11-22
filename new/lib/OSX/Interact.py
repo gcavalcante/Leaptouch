@@ -12,6 +12,8 @@ class Interact():
   GEST_SWIPE_LEFT = 'SLGest'
   GEST_SWIPE_RIGHT = 'SRGest'
   GEST_APP_VIEW = 'AVGest'
+  GEST_TIMEOUT = 30
+  GEST_SPEED_TRHS = 30
 
   def __init__(self):
     self.screen_width, self.screen_height = [(screen.frame().size.width, screen.frame().size.height) for screen in AppKit.NSScreen.screens()][-1]
@@ -19,6 +21,8 @@ class Interact():
     self.mouse_x = 0
     self.mouse_y = 0
     self.last_mouse_state = False
+    self.buffer = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    self.gesture_timeout = 0
     for i in range(10):
       self.buffer[i] = [0,0,0,0]
 
@@ -49,15 +53,20 @@ class Interact():
       self.set_left_button_pressed(pressed)
     elif fingers == 2 and self.last[3] == 2:
       Interact.execute_event(CGEventCreateScrollWheelEvent(None, kCGScrollEventUnitPixel, 2, self.last[1]-finger_y, self.last[0]-finger_x))
-    elif fingers >= 3 and self.last[3] >= 3:
-      if self.last[1] - finger_y > 60:
-        Interact.gestures(Interact.GEST_MISSION_CONTROL)
-      elif finger_y - self.last[1] > 60:
-        Interact.gestures(Interact.GEST_MISSION_CONTROL)
-      elif self.last[0] - finger_x > 60:
-        Interact.gestures(Interact.GEST_SWIPE_RIGHT)
-      elif finger_x - self.last[0] > 60:
-        Interact.gestures(Interact.GEST_SWIPE_LEFT)
+    elif fingers >= 3 and self.last[3] >= 3 and self.gesture_timeout <= 0:
+      if self.getxvel() > Interact.GEST_SPEED_TRHS:
+        self.gestures(Interact.GEST_SWIPE_LEFT)
+      elif self.getxvel() < - Interact.GEST_SPEED_TRHS:
+        self.gestures(Interact.GEST_SWIPE_RIGHT)
+      elif self.getyvel() > Interact.GEST_SPEED_TRHS:
+        self.gestures(Interact.GEST_APP_VIEW)
+      elif self.getyvel() < - Interact.GEST_SPEED_TRHS:
+        self.gestures(Interact.GEST_MISSION_CONTROL)
+
+    if self.gesture_timeout > 0:
+      self.gesture_timeout -= 1
+
+    print self.gesture_timeout
 
     self.move_mouse(finger_x, finger_y)
     self.last = (finger_x,finger_y,pressed,fingers)
@@ -103,8 +112,7 @@ class Interact():
     CGEventPost(kCGHIDEventTap, event)
 
   # OSX Gestures
-  @staticmethod
-  def gestures(gesture_type):
+  def gestures(self, gesture_type):
     if gesture_type == Interact.GEST_MISSION_CONTROL:
       gesture_script = 'tell application "System Events" to key code 126 using control down'
     elif gesture_type == Interact.GEST_SWIPE_RIGHT:
@@ -115,3 +123,4 @@ class Interact():
       gesture_script = 'tell application "System Events" to key code 125 using control down'
     # Snippet from https://github.com/dennisjanssen/PyLeapMouse/blob/f3da2214cd9698cbeffed32d3393f8a9a95d6c33/LeapFunctions.py#L92
     os.system("osascript -e '" + gesture_script + "'")
+    self.gesture_timeout = Interact.GEST_TIMEOUT
