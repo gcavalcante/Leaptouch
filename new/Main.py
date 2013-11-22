@@ -18,6 +18,7 @@ class Main():
       point,fingers = point_tuple
       x,y,z_transform = self.translator.leaptransform(point)
       z = point[2] - z_transform
+      print z_transform
       x,y = self.calibrator.leaptoscreen(point[0],point[1])
       if z < self.z_limit :
         self.down = True
