@@ -35,11 +35,11 @@ class Translator:
 		A = numpy.zeros((8,8))
 		B = numpy.zeros((8,1))
 		for i in range(0,4):
-			A[2*i][0:2] = self.leap[i]
+			A[2*i][0:2] = self.leap[i][0:2]
 			A[2*i][2] = 1
 			A[2*i][6] = -self.leap[i][0]*self.display[i][0]
 			A[2*i][7] = -self.leap[i][1]*self.display[i][0]
-			A[2*i+1][3:5] = self.leap[i]
+			A[2*i+1][3:5] = self.leap[i][0:2]
 			A[2*i+1][5] = 1
 			A[2*i+1][6] = -self.leap[i][0]*self.display[i][1]
 			A[2*i+1][7] = -self.leap[i][1]*self.display[i][1]
@@ -67,16 +67,16 @@ class Translator:
 		self.UR = UR
 		self.BL = BL
 		self.BR = BR
-		self.add_point(UL[0:2], [0,0])
-		self.add_point(UR[0:2], [1,0])
-		self.add_point(BL[0:2], [0,1])
-		self.add_point(BR[0:2], [1,1])
+		self.add_point(UL, [0,0,1])
+		self.add_point(UR, [1,0,1])
+		self.add_point(BL, [0,1,1])
+		self.add_point(BR, [1,1,1])
 		self.calculate()
 
 	def leaptransform(self, p):
-		p_t = numpy.array(p).reshape((2,1))
+		p_t = numpy.array(p).reshape((3,1))
 		d_t = self.H.dot(p_t)
-		return d_t.reshape((1,2))
+		return d_t.reshape((1,3))
 
 	# Plane equation in the form of Ax + By + Cz = D.
 	# Also computes S = SQRT(A^2 + B^2 + C^2)
