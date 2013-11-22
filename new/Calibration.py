@@ -1,8 +1,103 @@
 
 import platform
 
+import numpy
+from numpy import linalg
 
 os = 'MAC'
+
+
+
+
+
+class Translator:
+
+	def __init__(self):
+		self.display = []
+		self.leap = []
+
+	def add_point(self, display, leap):
+		self.display.append(display)
+		self.leap.append(leap)
+
+	def calculate(self):
+		A = numpy.zeros((3,3))
+		A[0] = self.BR - self.BL
+		A[1] = self.TL - self.BL
+		A[2] = numpy.cross(A[0], A[1])
+		A[2] /= numpy.linalg.norm(A[2])
+
+		self.A = A
+
+	def project(self, p):
+		q = p
+		p = self.BL
+		n = self.A[2]
+
+		q_proj = q - numpy.dot(q - p, n) * n
+		return q_proj
+
+	def get_x(self, p):
+		p = numpy.array(p) 
+
+		proj = self.project(p) - self.BL
+		#print p, proj
+
+		return numpy.dot(proj, self.A[0]/numpy.linalg.norm(self.A[0])) / numpy.linalg.norm(self.A[0])
+
+
+	def get_y(self, p):
+		p = numpy.array(p) 
+
+		proj = self.project(p) - self.BL
+		#print p, proj
+
+		return numpy.dot(proj, self.A[1]/numpy.linalg.norm(self.A[1])) / numpy.linalg.norm(self.A[1])
+
+	def get_z(self, p):
+		p = numpy.array(p)
+		proj = self.project(p)
+		d = proj - p
+		return numpy.linalg.norm(d)
+
+	# Calculate borders from points
+	def calibratepoints(self, npoints):
+		UL = [0.0,0.0,0.0]
+		UR = [0.0,0.0,0.0]
+		BL = [0.0,800000.0,0.0]
+		BR = [0.0,800000.0,0.0]
+		for p in npoints :
+			if p[0] < 0 and p[1] > UL[1]:
+				UL = p
+			if p[0]	> 0 and p[1] > UR[1]:
+				UR = p
+			if p[0] < 0 and p[1] < BL[1]:
+				BL = p
+			if p[0]	> 0 and p[1] < BR[1]:
+				BR = p
+		self.TL = numpy.array(UL)
+		self.TR = numpy.array(UR)
+		self.BL = numpy.array(BL)
+		self.BR = numpy.array(BR)
+		self.calculate()
+
+	def leaptransform(self, p):
+		return [self.get_x(p), self.get_y(p), self.get_z(p)]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

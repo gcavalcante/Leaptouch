@@ -16,14 +16,11 @@ class Main():
       self.calibration_points.append(point)
     elif not self.in_calibration and point_tuple:
       point,fingers = point_tuple
-      x,y = self.calibrator.leaptoscreen(point[0],point[1])
-      z = point[2]
-      
-      Z_LIMIT_CUT = -1.0*z*60/249+20
-      print Z_LIMIT_CUT, self.z_limit
-      if z < -240:
+      x,y,z_transform = self.calibrator.leaptransform(point)
+      z = point[2] - z_transform
+      if z < self.z_limit + 10:
         self.down = True
-      elif z > -240:
+      elif z >  self.z_limit + 10:
         self.down = False
 
       print 'DOWN = ', self.down
@@ -50,7 +47,7 @@ class Main():
     self.in_calibration = True
     self.listener = Listener.Listener(self.on_frame)
     self.calibration_points = []
-    self.calibrator = Calibration.Calibration()
+    self.calibrator = Calibration.Translator()
     #Decide what Interact to Call
     os_name = platform.system().lower()
     if os_name == OS_NAME_OSX:
@@ -67,8 +64,28 @@ class Main():
 
   def end_calibration(self):
     self.in_calibration = False
-    self.z_limit = self.calibrator.set_calibration(self.calibration_points)
+    self.calibrator.calibratepoints(self.calibration_points)
+    self.z_limit = self.get_extreme_z(self.calibration_points)
     #Call the Calibrate funtion in Translation Module (self.calibration_points)
+
+  def get_extreme_z(self,points):
+    biggers = [-9999,-9999,-9999]
+    smallers = [9999,9999,9999]
+    zs = [z[2] for z in points]
+    points.sort()
+    min_z = 0
+    #z[0] + 20
+    for x,y,z in points:
+      if z < min_z:#Consider Only points near screen
+        biggers[0] = x if x > biggers[0] else biggers[0]
+        biggers[1] = y if y > biggers[1] else biggers[1]
+        biggers[2] = z if z > biggers[2] else biggers[2]
+        smallers[0] = x if x < smallers[0] else smallers[0]
+        smallers[1] = y if y < smallers[1] else smallers[1]
+        smallers[2] = z if z < smallers[2] else smallers[2]
+    return smallers[2]
+
+
 
 if __name__ == "__main__":
   main = Main()
