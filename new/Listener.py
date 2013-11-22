@@ -12,6 +12,7 @@ class Listener(Leap.Listener):
     self.callback = callback
     self.controller = Leap.Controller()
     self.controller.add_listener(self)
+    self.controller.set_policy_flags(1)
   def __del__(self):
     super(Listener, self).__del__()
     self.controller.remove_listener(self)
