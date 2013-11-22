@@ -65,6 +65,12 @@ class Translator:
 
 		return numpy.dot(proj, self.A[1]/numpy.linalg.norm(self.A[1])) / numpy.linalg.norm(self.A[1])
 
+	def get_z(self, p):
+		p = numpy.array(p)
+		proj = self.project(p)
+		d = proj - p
+		return numpy.linalg.norm(d)
+
 	# Calculate borders from points
 	def calibratepoints(self, npoints):
 		UL = [0.0,0.0,0.0]
@@ -87,9 +93,7 @@ class Translator:
 		self.calculate()
 
 	def leaptransform(self, p):
-		p_t = numpy.array(p).reshape((3,1))
-		d_t = numpy.dot(self.H, p_t)
-		return d_t.reshape((1,3))
+		return [t.get_x(p), t.get_y(p), t.get_z(p)]
 
 if debug:
 	t = Translator()
@@ -107,7 +111,7 @@ if debug:
 	t.calibratepoints(NP)
 	EP = [p0, p3, p6, p7]
 	for p in EP :
-		print t.get_x(p), t.get_y(p)
+		print t.leaptransform(p)
 
 # Leap to Screen correlation
 # def leaptoscreen(posx, posy):
