@@ -1,7 +1,7 @@
-leaplm = -360
-leaprm = 330
-leapum = 580
-leapdm = 272
+leaplm = -410
+leaprm = 430
+leapum = 980
+leapdm = 80
 monlm = 0
 monrm = 2560
 monum = 0
@@ -20,11 +20,35 @@ N = [0.0, 0.0, 0.0, 0.0, 0.0]
 
 # Calculate borders from points
 def calibratepoints(npoints):
+	UL = [0.0,0.0,0.0]
+	UR = [0.0,0.0,0.0]
+	BL = [0.0,800000.0,0.0]
+	BR = [0.0,800000.0,0.0]
 	for p in npoints :
-		print p
+		if p[0] < 0 and p[1] > UL[1]:
+			UL = p
+		if p[0]	> 0 and p[1] > UR[1]:
+			UR = p
+		if p[0] < 0 and p[1] < BL[1]:
+			BL = p
+		if p[0]	> 0 and p[1] < BR[1]:
+			BR = p
+	return [UL, UR, BL, BR]
 
 # Leap to Screen correlation
 def leaptoscreen(posx, posy):
+	if posx >= leaplm and posx <= leaprm :
+		monx = (posx - leaplm) * monw / leapw
+	else :
+		monx = -1
+	if posy >= leapdm and posy <= leapum :
+		mony = abs(posy - leapum) * monh / leaph
+	else :
+		mony = -1
+	return [monx, mony]
+
+# Leap to Screen ratio
+def leapratio(posx, posy):
 	if posx >= leaplm and posx <= leaprm :
 		monx = (posx - leaplm) * monw / leapw
 	else :
@@ -60,6 +84,12 @@ if debug :
 	print(leaptoscreen(430, 980)) # 640, 0
 	print(leaptoscreen(10, 530))  # 320, 240
 
+	print(leapratio(-411, 79)) # -1, -1
+	print(leapratio(431, 981)) # -1, -1
+	print(leapratio(-410, 80)) # 0, 480
+	print(leapratio(430, 980)) # 640, 0
+	print(leapratio(10, 530))  # 320, 240
+
 	print(planeequation(P,Q,R))   # 6,3,2,6,7
 
 	N[0] = 3.0
@@ -71,15 +101,15 @@ if debug :
 	print(N[4])
 	print(distancetoplane(2.0,-3.0,1.0))
 
-	p0 = [-410 ,567  ,-323]
+	p0 = [-410 ,567  ,-323] #UL
 	p1 = [-124 ,-235 ,-345]
 	p2 = [-234 ,357  ,-336]
-	p3 = [-235 ,-648 ,-376]
-	p4 = [-454 ,235  ,-356] #UR
-	p5 = [-572 ,-343 ,-385] #BR
-	p6 = [346  ,572  ,-353]
-	p7 = [373  ,-532 ,-363]
-	p8 = [674  ,353  ,-326] #UL
-	p9 = [574  ,-262 ,-328] #BL
+	p3 = [-235 ,-648 ,-376] #BL
+	p4 = [-454 ,235  ,-356]
+	p5 = [-572 ,-343 ,-385]
+	p6 = [346  ,572  ,-353] #UR
+	p7 = [373  ,-532 ,-363] #BR
+	p8 = [674  ,353  ,-326]
+	p9 = [574  ,-262 ,-328]
 	NP = [p0, p1, p2, p3, p4, p5, p6, p7, p8, p9]
-	calibratepoints(NP)
+	print(calibratepoints(NP))
