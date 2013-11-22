@@ -12,8 +12,8 @@ class Interact():
   GEST_SWIPE_LEFT = 'SLGest'
   GEST_SWIPE_RIGHT = 'SRGest'
   GEST_APP_VIEW = 'AVGest'
-  GEST_TIMEOUT = 30
-  GEST_SPEED_TRHS = 30
+  GEST_TIMEOUT = 50
+  GEST_SPEED_TRHS = 20
 
   def __init__(self):
     self.screen_width, self.screen_height = [(screen.frame().size.width, screen.frame().size.height) for screen in AppKit.NSScreen.screens()][-1]
@@ -54,8 +54,8 @@ class Interact():
     if fingers == 1:
       self.set_left_button_pressed(pressed)
     elif fingers == 2 and self.last[3] == 2:
-      Interact.execute_event(CGEventCreateScrollWheelEvent(None, kCGScrollEventUnitPixel, 2, self.last[1]-finger_y, self.last[0]-finger_x))
-    elif fingers >= 3 and self.last[3] >= 3 and self.gesture_timeout <= 0:
+      Interact.execute_event(CGEventCreateScrollWheelEvent(None, kCGScrollEventUnitPixel, 2, finger_y-self.last[1], self.last[0]-finger_x))
+    elif fingers >= 4 and self.last[3] >= 4 and self.gesture_timeout <= 0:
       if self.getxvel() > Interact.GEST_SPEED_TRHS:
         self.gestures(Interact.GEST_SWIPE_LEFT)
       elif self.getxvel() < - Interact.GEST_SPEED_TRHS:
