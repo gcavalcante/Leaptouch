@@ -19,6 +19,28 @@ class Interact():
     self.mouse_x = 0
     self.mouse_y = 0
     self.last_mouse_state = False
+    for i in range(10):
+      self.buffer[i] = [0,0,0,0]
+
+  def addtobuffer(self, finger_x, finger_y, pressed, fingers):
+    if not hasattr(self, 'buffer'):
+      for i in range(10):
+        self.buffer[i] = [0,0,0,0]
+    for i in range(9):
+      self.buffer[i] = self.buffer[i+1]
+    self.buffer[9] = [finger_x, finger_y, pressed, fingers]
+
+  def getxvel(self):
+    v = 0.0
+    for i in range(9):
+      v += self.buffer[i + 1][0] - self.buffer[i][0]
+    return v / 9.0; 
+
+  def getyvel(self):
+    v = 0.0
+    for i in range(9):
+      v += self.buffer[i + 1][1] - self.buffer[i][1]
+    return v / 9.0; 
 	
   def update(self, finger_x, finger_y, pressed, fingers):
     if not hasattr(self, 'last'):
@@ -39,6 +61,7 @@ class Interact():
 
     self.move_mouse(finger_x, finger_y)
     self.last = (finger_x,finger_y,pressed,fingers)
+    self.addtobuffer(finger_x,finger_y,pressed,fingers)
 
 
   def move_mouse(self, x, y):
