@@ -38,9 +38,19 @@ class Translator:
         p = numpy.array(p)
         proj = self.project(p)
         d = proj - p
-        return numpy.linalg.norm(d)
+        r = -1 if d[2] > 0 else 1 
+        return numpy.linalg.norm(d) * r
 
     # Calculate borders from points
+    def attempt_calibration(self, points, corner):
+        center = numpy.average(points, axis=0)
+        distances = [numpy.linalg.norm(numpy.array(p) - center) for p in points]
+        if max(distances) < 4 and len(points) >= 100:
+            self.calibratepoints(center, corner)
+            return True
+        print max(distances)
+        return False
+
     def calibratepoints(self, point, corner):
         if corner == 0:
             self.TL = numpy.array(point)
@@ -50,9 +60,10 @@ class Translator:
             self.BR = numpy.array(point)
         elif corner == 3:
             self.BL = numpy.array(point)
-            self.calculate()
-            self.find_homography()
-        print corner
+
+    def finalizecalibration(self):
+        self.calculate()
+        self.find_homography()
 
     def leaptransform(self, p):
         r = self.apply_homography(p[:2])
@@ -81,26 +92,3 @@ class Translator:
         x = (T[0] * pt[0] + T[1] * pt[1] + T[2]) / (T[6] * pt[0] + T[7] * pt[1] + 1)
         y = (T[3] * pt[0] + T[4] * pt[1] + T[5]) / (T[6] * pt[0] + T[7] * pt[1] + 1)
         return x, y
-
-
-# Usage: Displays.resolutions() -> [(x1, y1), (x2, y2)]
-class Displays(object):
-
-    # OS Names
-    OS_NAME_OSX = 'darwin'
-    OS_NAME_WIN = '??'
-
-    @staticmethod
-    def resolutions():
-        os_name = platform.system().lower()
-        # OSX
-        if os_name == Displays.OS_NAME_OSX:
-            import AppKit
-            return [(screen.frame().size.width, screen.frame().size.height) for screen in AppKit.NSScreen.screens()]
-        # WIN
-        elif os_name == Displays.OS_NAME_WIN:
-            # TODO TEST THIS ON WINDOWS!
-            import ctypes
-            user32 = ctypes.windll.user32
-            return (user32.GetSystemMetrics(0), user32.GetSystemMetrics(1))
-
