@@ -32,21 +32,44 @@ class Translator:
 		self.leap.append(leap)
 
 	def calculate(self):
-		A = numpy.zeros((8,8))
-		B = numpy.zeros((8,1))
-		for i in range(0,4):
-			A[2*i][0:2] = self.leap[i][0:2]
-			A[2*i][2] = 1
-			A[2*i][6] = -self.leap[i][0]*self.display[i][0]
-			A[2*i][7] = -self.leap[i][1]*self.display[i][0]
-			A[2*i+1][3:5] = self.leap[i][0:2]
-			A[2*i+1][5] = 1
-			A[2*i+1][6] = -self.leap[i][0]*self.display[i][1]
-			A[2*i+1][7] = -self.leap[i][1]*self.display[i][1]
-			B[2*i] = self.display[i][0]
-			B[2*i+1] = self.display[i][1]
-		X = linalg.lstsq(A,B)
-		self.H = numpy.reshape(numpy.vstack((X[0],[1])),(3,3))
+		A = numpy.zeros((3,3))
+		A[0] = self.BR - self.BL
+		A[1] = self.TL - self.BL
+		A[2] = numpy.cross(A[0], A[1])
+		A[2] /= numpy.linalg.norm(A[2])
+
+		self.A = A
+
+	def project(self, p):
+		q = p
+		p = self.BL
+		n = self.A[2]
+
+		q_proj = q - numpy.dot(q - p, n) * n
+		return q_proj
+
+	def get_x(self, p):
+		p = numpy.array(p) 
+
+		proj = self.project(p) - self.BL
+		#print p, proj
+
+		return numpy.dot(proj, self.A[0]/numpy.linalg.norm(self.A[0])) / numpy.linalg.norm(self.A[0])
+
+
+	def get_y(self, p):
+		p = numpy.array(p) 
+
+		proj = self.project(p) - self.BL
+		#print p, proj
+
+		return numpy.dot(proj, self.A[1]/numpy.linalg.norm(self.A[1])) / numpy.linalg.norm(self.A[1])
+
+	def get_z(self, p):
+		p = numpy.array(p)
+		proj = self.project(p)
+		d = proj - p
+		return numpy.linalg.norm(d)
 
 	# Calculate borders from points
 	def calibratepoints(self, npoints):
@@ -63,38 +86,14 @@ class Translator:
 				BL = p
 			if p[0]	> 0 and p[1] < BR[1]:
 				BR = p
-		self.UL = UL
-		self.UR = UR
-		self.BL = BL
-		self.BR = BR
-		self.add_point(UL, [0,0,1])
-		self.add_point(UR, [1,0,1])
-		self.add_point(BL, [0,1,1])
-		self.add_point(BR, [1,1,1])
+		self.TL = numpy.array(UL)
+		self.TR = numpy.array(UR)
+		self.BL = numpy.array(BL)
+		self.BR = numpy.array(BR)
 		self.calculate()
 
 	def leaptransform(self, p):
-		p_t = numpy.array(p).reshape((3,1))
-		d_t = self.H.dot(p_t)
-		return d_t.reshape((1,3))
-
-	# Plane equation in the form of Ax + By + Cz = D.
-	# Also computes S = SQRT(A^2 + B^2 + C^2)
-	# N = [A,B,C,D,S]
-	def planeequation(self, P, Q, R):
-		N = [0,0,0,0,0]
-		U = [Q[0] - P[0], Q[1] - P[1], Q[2] - P[2]]
-		V = [R[0] - P[0], R[1] - P[1], R[2] - P[2]]
-		N[0] = (U[1] * V[2]) - (U[2] - V[1]) # A
-		N[1] = (U[2] * V[0]) - (U[0] * V[2]) # B
-		N[2] = (U[0] * V[1]) - (U[1] * V[0]) # C
-		N[3] = (N[0] * P[0]) + (N[1] * P[1]) + (N[2] * P[2]) # D 
-		N[4] = ((N[0] ** 2) + (N[1] ** 2) + (N[2] ** 2)) ** 0.5 # S
-		self.N = N
-
-	# Distance from point P(posx, posy, posz) to plane in N
-	def distancetoplane(posx, posy, posz):
-		return abs((N[0] * posx) + (N[1] * posy) + (N[2] * posz) - N[3]) / N[4]
+		return [t.get_x(p), t.get_y(p), t.get_z(p)]
 
 if debug:
 	t = Translator()
@@ -110,8 +109,9 @@ if debug:
 	p9 = [574  ,-262 ,-328]
 	NP = [p0, p1, p2, p3, p4, p5, p6, p7, p8, p9]
 	t.calibratepoints(NP)
-	for p in NP :
-		print(t.leaptransform(p))
+	EP = [p0, p3, p6, p7]
+	for p in EP :
+		print t.leaptransform(p)
 
 # Leap to Screen correlation
 # def leaptoscreen(posx, posy):
