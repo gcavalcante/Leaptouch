@@ -47,6 +47,8 @@ class Interact():
     return v / 9.0; 
 	
   def update(self, finger_x, finger_y, pressed, fingers):
+    finger_x *= self.screen_width
+    finger_y = self.screen_height - (finger_y * self.screen_height)
     if not hasattr(self, 'last'):
       self.last = (finger_x,finger_y,pressed,fingers)
     if fingers == 1:
