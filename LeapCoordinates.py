@@ -1,15 +1,15 @@
-leaplm = -410
-leaprm = 430
-leapum = 980
-leapdm = 80
+leaplm = -360
+leaprm = 330
+leapum = 580
+leapdm = 272
 monlm = 0
-monrm = 640
+monrm = 2560
 monum = 0
-mondm = 480
-leapw = ((leaprm - leaplm) / 2)
-leaph = ((leapum - leapdm) / 2)
-monw = ((monrm - monlm) / 2)
-monh = ((mondm - monum) / 2)
+mondm = 1600
+leapw = ((leaprm - leaplm))
+leaph = ((leapum - leapdm))
+monw = ((monrm - monlm) )
+monh = ((mondm - monum))
 
 debug = 1
 
