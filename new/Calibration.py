@@ -5,8 +5,6 @@ import numpy
 from numpy import linalg
 from scipy.linalg import svd,lstsq
 
-os = 'MAC'
-
 class Translator:
 
     def __init__(self):

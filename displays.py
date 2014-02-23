@@ -5,7 +5,7 @@ class Displays(object):
 
   # OS Names
   OS_NAME_OSX = 'darwin'
-  OS_NAME_WIN = '??'
+  OS_NAME_WIN = 'windows'
 
   @staticmethod
   def resolutions():
