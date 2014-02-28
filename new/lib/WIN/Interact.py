@@ -1,4 +1,5 @@
 import ctypes
+from ctypes import c_int
       
 # WIN interaction class
 class Interact():
@@ -41,8 +42,8 @@ class Interact():
       self.last = (finger_x,finger_y,pressed,fingers)
     if fingers == 1:
       self.set_left_button_pressed(pressed)
-    elif fingers == 2 and self.last[3] == 2:
-      ctypes.windll.user32.mouse_event(2, self.mouse_x, self.mouse_y, finger_y-self.last[1], 0)
+    #elif fingers == 2 and self.last[3] == 2:
+    #  ctypes.windll.user32.mouse_event(2, c_int(int(round(self.mouse_x))), c_int(int(round(self.mouse_y))), c_int(int(round(finger_y-self.last[1]))), 0)
     
     self.move_mouse(finger_x, finger_y)
     self.last = (finger_x,finger_y,pressed,fingers)
@@ -54,10 +55,10 @@ class Interact():
     self.mouse_y = y
     self.check_and_correct_borders();
     if self.left_button_pressed: # Drag!
-      ctypes.windll.user32.SetCursorPos(self.mouse_x, self.mouse_y)
+      ctypes.windll.user32.SetCursorPos(c_int(int(round(self.mouse_x))), c_int(int(round(self.mouse_y))))
       #Interact.execute_event(CGEventCreateMouseEvent(None, kCGEventLeftMouseDragged, (), 0))
     else: # Just move
-      ctypes.windll.user32.SetCursorPos(self.mouse_x, self.mouse_y)
+      ctypes.windll.user32.SetCursorPos(c_int(int(round(self.mouse_x))), c_int(int(round(self.mouse_y))))
 
   def set_left_button_pressed(self, boolean_button): 
     if boolean_button == True and not self.last_mouse_state:
@@ -67,11 +68,11 @@ class Interact():
     self.last_mouse_state = boolean_button
         
   def click_down(self):
-    ctypes.windll.user32.mouse_event(2, self.mouse_x, self.mouse_y, 0, 0)
+    ctypes.windll.user32.mouse_event(2, c_int(int(round(self.mouse_x))), c_int(int(round(self.mouse_y))), 0, 0)
     self.left_button_pressed = True
 
   def click_up(self):
-    ctypes.windll.user32.mouse_event(4, self.mouse_x, self.mouse_y, 0, 0)
+    ctypes.windll.user32.mouse_event(4, c_int(int(round(self.mouse_x))), c_int(int(round(self.mouse_y))), 0, 0)
     self.left_button_pressed = False
   
   def check_and_correct_borders(self):
